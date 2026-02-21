@@ -17,7 +17,7 @@ Weakness: not supporting input in Python
 ##### availeble language
 english
 ###### Communication with the bot manager
-Since a lot of work has been done for this robot, and a strict license has been put in place, if you have any questions or suggestions, you can contact the administrator of the robot using the Telegram ID @red_heart_00
+Since a lot of work has been done for this robot, and a strict license has been put in place, if you have any questions or suggestions, you can contact the administrator of the robot using the Telegram ID red_heart_00
 ####### Made by
 powerful392
 ######## GitHub profile link
@@ -41,7 +41,7 @@ time, aiosqlite, aiofiles, subprocess, os, sqlite3, apscheduler, datetime
 ##### زبان در دسترس
 انگلیسی
 ###### ارتباط با مدیر ربات
-از آنجا که زحمات زیادی برای این ربات کشیده شده، و لایسنس سختگیرانه ای هم گذاشته شده، در صورت داشتن هر سؤال، یا هر پیشنهاد، میتوانید با ادمین استفاده از شناسه ی تلگرامی @red_heart_00 با مدیر ربات ارتباط برقرار کنید
+از آنجا که زحمات زیادی برای این ربات کشیده شده، و لایسنس سختگیرانه ای هم گذاشته شده، در صورت داشتن هر سؤال، یا هر پیشنهاد، میتوانید با ادمین استفاده از شناسه ی تلگرامی red_heart_00 با مدیر ربات ارتباط برقرار کنید
 ####### ساخته شده توسط
 powerful392
 ######## لینک پروفایل گیتهاب
