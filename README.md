@@ -17,11 +17,10 @@ Relatively strong security scanning system
 The ability to communicate with the robot manager
 Ability to search the log using /search in Telegram
 Weakness: not supporting input in Python
-##### availeble language
-english
-###### Made by
+availeble language in robot english
+##### Made by
 powerful392
-####### GitHub profile link
+###### GitHub profile link
 https://github.com/powerful392
 # py_runner
 اجرا کننده ی کدهای پایتون نوشته شده برای تلگرام با پایتون
@@ -43,9 +42,8 @@ time, aiosqlite, aiofiles, subprocess, os, sqlite3, apscheduler, datetime
 قابلیت ارتباط با مدیر ربات
 قابلیت جست و جو در لاگ با استفاده از /search در تلگرام
 نقطه ی ضعف: پشتیبانی نکردن از input در پایتون
-##### زبان در دسترس
-انگلیسی
-###### ساخته شده توسط
+زبان در دسترس ربدر ربات انگلیسی
+##### ساخته شده توسط
 powerful392
-####### لینک پروفایل گیتهاب
+###### لینک پروفایل گیتهاب
 https://github.com/powerful392
