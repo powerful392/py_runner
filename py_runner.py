@@ -50,7 +50,7 @@ async def log_event(user_id, action_description, user_metadata=None, file_path=N
     current_time_string = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     user_fingerprint = "no-data"
     if user_metadata:
-        user_fingerprint = f"firstname:{user_metadata.first_name}|username:{user_metadata.username}|userid:{user_metadata.id}"
+        user_fingerprint = f"firstname: {user_metadata.first_name}|username: {user_metadata.username}|userid: {user_metadata.id}"
     file_size_information = ""
     if file_path and os.path.exists(file_path):
         size_in_bytes = os.path.getsize(file_path)
