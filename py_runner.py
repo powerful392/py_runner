@@ -1,3 +1,5 @@
+from flask import Flask
+from threading import Thread
 import time
 import aiosqlite
 import aiofiles
@@ -13,6 +15,15 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Messa
 import telegram.error
 from dotenv import load_dotenv
 import asyncio
+app = Flask('')
+@app.route('/')
+def home():
+    return "Bot is alive!"
+def run():
+    app.run(host='0.0.0.0', port=8080)
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
 load_dotenv()
 telegram_bot_token = os.getenv("bot_token")
 administrator_id = int(os.getenv("admin_id"))
@@ -543,8 +554,23 @@ async def on_startup(application):
 bot_application.post_init = on_startup
 async def on_shutdown(application):
     global database_connection
+    await log_event(administrator_id, "shutdown sequence started: preparing to send all data to admin")
     if database_connection:
-        await log_event(administrator_id, "database is closing now (shutdown sequence)")
         await database_connection.close()
+        await log_event(administrator_id, "database connection was closed successfully")
+    system_files_to_send = ["bot_database.db", "users_list.txt", "banned_users.txt", "master_log.txt"]
+    all_files_in_directory = os.listdir(".")
+    user_log_files = [file for file in all_files_in_directory if file.startswith("log_") and file.endswith(".txt")]
+    all_important_files = system_files_to_send + user_log_files
+    for target_file_name in all_important_files:
+        if os.path.exists(target_file_name):
+            try:
+                async with aiofiles.open(target_file_name, mode='rb') as file_to_send:
+                    file_content = await file_to_send.read()
+                    await application.bot.send_document(chat_id=administrator_id, document=file_content, filename=target_file_name, caption=f"Backup: {target_file_name}")
+            except Exception as error_during_send:
+                await log_event(administrator_id, f"error sending backup for {target_file_name}: {str(error_during_send)}")
+    await log_event(administrator_id, "shutdown sequence completed: all files sent")
 bot_application.post_stop = on_shutdown
+keep_alive()
 bot_application.run_polling()
