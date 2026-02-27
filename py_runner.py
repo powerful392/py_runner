@@ -1,7 +1,3 @@
-import requests
-import base64   
-from flask import Flask
-from threading import Thread
 import time
 import aiosqlite
 import aiofiles
@@ -17,20 +13,9 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Messa
 import telegram.error
 from dotenv import load_dotenv
 import asyncio
-app = Flask('')
-@app.route('/')
-def home():
-    return "Bot is alive!"
-def run():
-    app.run(host='0.0.0.0', port=8080)
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
 load_dotenv()
-github_repository = "powerful392/py_runner-s_file"  
 telegram_bot_token = os.getenv("bot_token")
 administrator_id = int(os.getenv("admin_id"))
-github_access_token = os.getenv("github_token")
 database_connection = None
 forbidden_commands_list = ["os.remove", "base64", "marshal", "pickle", "os.rmdir", "os.rename", "os.system", "os.chdir", "os.environ", "shutil.", "subprocess.", "popen", "call", "check_output", "getstatusoutput", "eval(", "exec(", "getattr", "setattr", "__builtins__", "__subclasses__", "__globals__", "socket.", "requests.", "urllib.", "http.client", "smtplib", "telnetlib", "multiprocessing", "threading", "fork", "itertools.cycle", "sys.modules", "sys.argv", "pathlib.", "eval"]
 user_contact_state = {}
@@ -73,8 +58,7 @@ async def log_event(user_id, action_description, user_metadata=None, file_path=N
     log_entry_message = f"[{current_time_string}] fingerprint: {user_fingerprint} | user {user_id}: {action_description}{file_size_information}\n"
     async with aiofiles.open("master_log.txt", "a", encoding="utf-8") as master_log_file:
         await master_log_file.write(log_entry_message)
-        user_log_filename = f"log_{user_id}.txt"
-    async with aiofiles.open(user_log_filename, "a", encoding="utf-8") as individual_user_log_file:
+    async with aiofiles.open(f"log_{user_id}.txt", "a", encoding="utf-8") as individual_user_log_file:
         await individual_user_log_file.write(log_entry_message)
     if database_connection:
         await database_connection.execute(
@@ -82,8 +66,6 @@ async def log_event(user_id, action_description, user_metadata=None, file_path=N
             (str(user_id), user_fingerprint, action_description, current_time_string)
         )
         await database_connection.commit()
-    await sync_to_github("master_log.txt")
-    await sync_to_github(user_log_filename)
 async def check_banned_users(user_id):
     if not os.path.exists("banned_users.txt"):
         return False
@@ -382,7 +364,6 @@ async def ban_user_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     success_ban_text = f"{target_user_id_ban} user banned successfully"
     await update.message.reply_text(success_ban_text)
     await log_event(administrator_id, admin_log_entry, update.message.from_user)
-    await sync_to_github("banned_users.txt")
 bot_application.add_handler(CommandHandler("ban", ban_user_handler))
 async def unban_user_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.from_user.id != administrator_id:
@@ -413,7 +394,6 @@ async def unban_user_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await log_event(administrator_id, f"admin unbanned user: {unbanned_user_id_target}", update.message.from_user)
     except Exception as e:
         await update.message.reply_text(f"error in unban process: {e}")
-    await sync_to_github("banned_users.txt")
 bot_application.add_handler(CommandHandler("unban", unban_user_handler))
 async def contact_admin_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id_contact = str(update.message.from_user.id)
@@ -540,51 +520,7 @@ async def search_user_logs_handler(update: Update, context: ContextTypes.DEFAULT
 bot_application.add_handler(CommandHandler("search", search_user_logs_handler))
 scheduler_instance = AsyncIOScheduler()
 scheduler_instance.add_job(send_daily_logs, 'cron', hour=0, minute=0, args=[bot_application])
-async def sync_to_github(file_path):
-    if not github_access_token:
-        return
-    sync_url = f"https://api.github.com/repos/{github_repository}/contents/{file_path}"
-    request_headers = {"Authorization": f"token {github_access_token}", "Accept": "application/vnd.github.v3+json"}
-    try:
-        if not os.path.exists(file_path):
-            return
-        async with aiofiles.open(file_path, "rb") as file_data:
-            content = await file_data.read()
-            encoded_content = base64.b64encode(content).decode("utf-8")
-        api_response = await asyncio.to_thread(requests.get, sync_url, headers=request_headers)
-        file_sha = api_response.json().get("sha") if api_response.status_code == 200 else None
-        current_sync_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        payload = {"message": f"automatic sync: {file_path} at {current_sync_time}", "content": encoded_content}
-        if file_sha:
-            payload["sha"] = file_sha
-        final_response = await asyncio.to_thread(requests.put, sync_url, json=payload, headers=request_headers)
-        if final_response.status_code in [200, 201]:
-            report = f"synced {file_path} at {current_sync_time}"
-            await log_event(administrator_id, report)
-    except Exception as sync_error:
-        error_report = f"error syncing {file_path}: {sync_error}"
-        await log_event(administrator_id, error_report)
-async def download_from_github(file_path):
-    if not github_access_token:
-        return
-    download_url = f"https://api.github.com/repos/{github_repository}/contents/{file_path}"
-    request_headers = {"Authorization": f"token {github_access_token}"}
-    try:
-        api_response = await asyncio.to_thread(requests.get, download_url, headers=request_headers)
-        if api_response.status_code == 200:
-            decoded_data = base64.b64decode(api_response.json()["content"])
-            async with aiofiles.open(file_path, "wb") as local_file:
-                await local_file.write(decoded_data)
-            report = f"downloaded {file_path} from github"
-            await log_event(administrator_id, report)
-    except Exception as e:
-        error_report = f"download error {file_path}: {str(e)}"
-        await log_event(administrator_id, error_report)
 async def on_startup(application):
-    await download_from_github("bot_database.db")
-    await download_from_github("users_list.txt")
-    await download_from_github("master_log.txt")
-    await download_from_github("banned_users.txt")
     async with aiofiles.open("banned_users.txt", "a", encoding="utf-8") as banned_file_init:
         pass
     global database_connection
@@ -610,9 +546,5 @@ async def on_shutdown(application):
     if database_connection:
         await log_event(administrator_id, "database is closing now (shutdown sequence)")
         await database_connection.close()
-    await sync_to_github("bot_database.db")
-    await sync_to_github("users_list.txt")
-    await sync_to_github("master_log.txt")
 bot_application.post_stop = on_shutdown
-keep_alive()
 bot_application.run_polling()
